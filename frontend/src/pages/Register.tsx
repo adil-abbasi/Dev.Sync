@@ -1,7 +1,6 @@
 // src/pages/Register.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_URL } from '../utils/api'; // Import the hardcoded live backend URL
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -9,14 +8,22 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
+  // Use environment variable
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (!API_URL) {
+      alert('Backend URL is not set. Check your .env file.');
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_URL}/api/auth/register`, { // Use imported API_URL
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
@@ -38,7 +45,7 @@ const Register = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-10">
         <h2 className="text-4xl font-bold text-center mb-8 text-blue-600">Create Account</h2>
-        
+
         <form onSubmit={handleRegister} className="space-y-6">
           <input
             type="text"
@@ -73,7 +80,10 @@ const Register = () => {
         </form>
 
         <p className="text-center mt-6 text-gray-600">
-          Already have an account? <Link to="/login" className="text-blue-600 font-bold">Login</Link>
+          Already have an account?{' '}
+          <Link to="/login" className="text-blue-600 font-bold">
+            Login
+          </Link>
         </p>
       </div>
     </div>
