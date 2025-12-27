@@ -8,7 +8,7 @@ const app = express();
 
 // FIX CORS - ALLOW FRONTEND
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://dev-sync-l6qw.vercel.app/',
   credentials: true
 }));
 app.use(express.json());
