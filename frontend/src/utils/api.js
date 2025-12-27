@@ -1,5 +1,10 @@
 // src/utils/api.js
-export const API_URL = 'https://exquisite-healing-production-1a64.up.railway.app';
+export const API_URL = process.env.REACT_APP_API_URL;
+
+
+if (!API_URL) {
+  throw new Error("Backend URL is not set. Check your .env file.");
+}
 
 export const fetchAPI = async (endpoint, options) => {
   try {

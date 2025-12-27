@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_URL } from '../utils/api'; // Import the hardcoded API_URL
+import { API_URL } from '../utils/api';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,20 +10,16 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log('Trying to login with:', email);
-
     try {
-      const res = await fetch(`${API_URL}/api/auth/login`, { // Use imported API_URL
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
-      console.log('Response:', data);
 
       if (data.token) {
-        // Save token and user info
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('userName', data.user.name || 'User');
         navigate('/dashboard');
@@ -31,8 +27,8 @@ const Login: React.FC = () => {
         alert(data.message || 'Wrong email or password');
       }
     } catch (err) {
-      console.error(err);
-      alert('Cannot reach server. Please check your internet connection or backend URL.');
+      console.error('Login error:', err);
+      alert('Cannot reach server. Check your internet or backend URL.');
     }
   };
 
