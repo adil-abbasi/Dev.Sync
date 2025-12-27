@@ -10,21 +10,31 @@ const app = express();
 
 // === CORS ===
 const allowedOrigins = [
-  'http://localhost:3000', // local dev
-  'https://dev-sync-el6b.vercel.app',  // your live Vercel URL
-  process.env.FRONTEND_URL   // keep for flexibility
+  'http://localhost:3000',            // local dev
+  'https://dev-sync-el6b.vercel.app', // your live Vercel frontend
+  process.env.FRONTEND_URL             // flexibility for other environments
 ];
-app.use(cors({ credentials: true }));  // replace the whole cors block
 
-
+app.use(cors({
+  origin: function(origin, callback) {
+    // allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('CORS not allowed'));
+    }
+  },
+  credentials: true
+}));
 
 app.use(express.json());
 
 // === CONNECT TO MONGODB ATLAS ===
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB Atlas Connected Successfully!'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -46,9 +56,21 @@ app.get('/', (req, res) => {
 // REGISTER
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const user = await User.create(req.body);
+    // hash password
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+    const user = await User.create({
+      name: req.body.name,
+      email: req.body.email,
+      password: hashedPassword
+    });
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
   } catch (err) {
     if (err.code === 11000) return res.status(400).json({ message: 'Email already exists' });
     res.status(500).json({ message: 'Server error' });
@@ -61,10 +83,16 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'User not found' });
-    if (user.password !== password) return res.status(400).json({ message: 'Wrong password' });
+
+    // compare hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Wrong password' });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
