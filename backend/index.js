@@ -1,14 +1,68 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
 const app = express();
 
-app.use(cors());
+// FIX CORS - ALLOW FRONTEND
+app.use(cors({
+  origin: 'http://localhost:3000', // change in production
+  credentials: true
+}));
 app.use(express.json());
 
+// === CONNECT TO MONGODB ATLAS ===
+mongoose.connect('mongodb+srv://devsync:devsync123@cluster0.qms4hgx.mongodb.net/devsync?retryWrites=true&w=majority');
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+  console.log('MongoDB Atlas Connected Successfully!');
+});
+
+// === USER SCHEMA ===
+const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+});
+const User = mongoose.model('User', UserSchema);
+
+// === ROUTES ===
 app.get('/', (req, res) => {
   res.json({ message: "DevSync Backend is LIVE!" });
 });
 
-app.listen(5000, () => {
-  console.log('Backend running on http://localhost:5000');
+// REGISTER
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const user = await User.create(req.body);
+    const token = jwt.sign({ id: user._id }, 'secret-key', { expiresIn: '7d' });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ message: 'Email already exists' });
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// LOGIN
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: 'User not found' });
+    if (user.password !== password) return res.status(400).json({ message: 'Wrong password' });
+    const token = jwt.sign({ id: user._id }, 'secret-key', { expiresIn: '7d' });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// === LISTEN TO RAILWAY PORT ===
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT}`);
 });
