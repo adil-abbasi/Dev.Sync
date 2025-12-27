@@ -36,8 +36,7 @@
 }
 ,
   "engines": {
-    "node": "20.x",
-    "npm": "11.x"
+    "node": ">=20.x"
   },
   "eslintConfig": {
     "extends": ["react-app","react-app/jest"]
