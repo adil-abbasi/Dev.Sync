@@ -8,31 +8,37 @@ require('dotenv').config();
 
 const app = express();
 
+// === CONFIG ===
+const PORT = process.env.PORT || 8080;
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
+const FRONTEND_URL = process.env.FRONTEND_URL;
+
 // === CORS ===
 const allowedOrigins = [
-  'http://localhost:3000',             // Local dev
-  'https://dev-sync-el6b.vercel.app',  // Live Vercel frontend
-  process.env.FRONTEND_URL              // Flexibility for other environments
-];
+  'http://localhost:3000',   // Local dev
+  FRONTEND_URL                // Production frontend
+].filter(Boolean); // remove undefined
 
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin) return callback(null, true); // Postman or server-to-server requests
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('CORS not allowed'));
-    }
+    if (!origin) return callback(null, true); // Postman/server requests
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.warn('Blocked CORS request from:', origin);
+    return callback(new Error('CORS not allowed'));
   },
   credentials: true
 }));
 
 app.use(express.json());
 
-// === CONNECT TO MONGODB ATLAS ===
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Atlas Connected Successfully!'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// === MONGODB CONNECTION ===
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('MongoDB Connected Successfully!'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1); // Exit if DB connection fails
+  });
 
 // === USER SCHEMA ===
 const UserSchema = new mongoose.Schema({
@@ -45,7 +51,7 @@ const User = mongoose.model('User', UserSchema);
 
 // === ROUTES ===
 app.get('/', (req, res) => {
-  res.json({ message: "DevSync Backend is LIVE!" });
+  res.json({ message: 'DevSync Backend is LIVE!' });
 });
 
 // REGISTER
@@ -62,11 +68,15 @@ app.post('/api/auth/register', async (req, res) => {
 
     const user = await User.create({ name, email, password: hashedPassword });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    // Create JWT
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
   } catch (err) {
-    console.error(err);
+    console.error('Register error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -83,15 +93,18 @@ app.post('/api/auth/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Wrong password' });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    // Create JWT
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
   } catch (err) {
-    console.error(err);
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// === LISTEN ===
-const PORT = process.env.PORT || 5000;
+// === START SERVER ===
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
