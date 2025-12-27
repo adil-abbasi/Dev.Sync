@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_URL } from '../utils/api'; // Optional if you use centralized API helper
+import { API_URL } from '../utils/api'; // Import the hardcoded API_URL
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -13,7 +13,7 @@ const Login: React.FC = () => {
     console.log('Trying to login with:', email);
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
+      const res = await fetch(`${API_URL}/api/auth/login`, { // Use imported API_URL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

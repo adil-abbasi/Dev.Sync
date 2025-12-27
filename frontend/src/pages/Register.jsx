@@ -1,6 +1,7 @@
-// src/pages/Register.jsx
+// src/pages/Register.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../utils/api'; // Import the hardcoded live backend URL
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -8,11 +9,11 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register`, {
+      const res = await fetch(`${API_URL}/api/auth/register`, { // Use imported API_URL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })

@@ -11,20 +11,12 @@ const app = express();
 // === CORS ===
 const allowedOrigins = [
   'http://localhost:3000', // local dev
-  process.env.FRONTEND_URL   // production frontend URL
+  'https://dev-sync-el6b.vercel.app',  // your live Vercel URL
+  process.env.FRONTEND_URL   // keep for flexibility
 ];
+app.use(cors({ credentials: true }));  // replace the whole cors block
 
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true
-}));
+
 
 app.use(express.json());
 
