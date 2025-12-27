@@ -5,14 +5,14 @@ import { Link, useNavigate } from 'react-router-dom';
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');  // ← THIS WAS MISSING!
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
@@ -22,13 +22,14 @@ const Register = () => {
 
       if (data.token) {
         localStorage.setItem('authToken', data.token);
-        localStorage.setItem('userName', data.user.name);
+        localStorage.setItem('userName', data.user.name || 'User');
         navigate('/dashboard');
       } else {
         alert(data.message || 'Registration failed');
       }
     } catch (err) {
-      alert('Network error');
+      console.error(err);
+      alert('Cannot reach server. Please check your internet connection or backend URL.');
     }
   };
 

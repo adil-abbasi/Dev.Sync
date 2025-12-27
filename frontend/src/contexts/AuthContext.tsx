@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
-
+// AuthContext.tsx
 interface User {
   id: string;
   name: string;

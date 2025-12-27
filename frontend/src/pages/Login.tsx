@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../utils/api'; // Optional if you use centralized API helper
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -9,11 +10,10 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Show loading
     console.log('Trying to login with:', email);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -23,7 +23,7 @@ const Login: React.FC = () => {
       console.log('Response:', data);
 
       if (data.token) {
-        // SUCCESS → save token and go to dashboard
+        // Save token and user info
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('userName', data.user.name || 'User');
         navigate('/dashboard');
@@ -32,7 +32,7 @@ const Login: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      alert('Cannot reach server. Is backend running on port 5000?');
+      alert('Cannot reach server. Please check your internet connection or backend URL.');
     }
   };
 
@@ -68,7 +68,10 @@ const Login: React.FC = () => {
         </form>
 
         <p className="text-center mt-8 text-gray-600">
-          No account? <Link to="/register" className="text-blue-600 font-bold hover:underline">Sign up</Link>
+          No account?{' '}
+          <Link to="/register" className="text-blue-600 font-bold hover:underline">
+            Sign up
+          </Link>
         </p>
       </div>
     </div>
