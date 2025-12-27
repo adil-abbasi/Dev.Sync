@@ -1,5 +1,5 @@
 // src/utils/api.js
-export const API_URL = process.env.REACT_APP_API_URL;
+export const API_URL = 'https://exquisite-healing-production-1a64.up.railway.app';
 
 export const fetchAPI = async (endpoint, options) => {
   try {
